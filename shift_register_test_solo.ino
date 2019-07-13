@@ -2,9 +2,9 @@
 #define clockPin A0
 #define latchPin A1
 #define dataPin A2
-#define MINREF 100
-#define MAXREF 500
-#define ROC 50
+#define MINREF 1
+#define MAXREF 100
+#define ROC 15
 
 int x;
 int refresh = MAXREF;
@@ -12,6 +12,7 @@ int rateOfChange = -(ROC);
 
 //storage variable
 byte dataToSend;
+byte reversedDataToSend;
 
 void setup() {
   //set pins as output
@@ -31,29 +32,33 @@ void loop() {
   }
   // Set data to write
   dataToSend = 1;
+  reversedDataToSend = 128;
 
   // Output
-  writeLeds(dataToSend);
+  writeLeds(dataToSend, reversedDataToSend);
   delay(refresh);
 
   // Loop other LEDs
   for(x=0; x<7; x++) {
     dataToSend = (dataToSend << 1);
-    writeLeds(dataToSend);
+    reversedDataToSend = (reversedDataToSend >> 1);
+    writeLeds(dataToSend, reversedDataToSend);
     delay(refresh);
   }
 
   // Skip the last LED as it will be lit by the next cycle
   for(x=0; x<6; x++) {
     dataToSend = (dataToSend >> 1);
-    writeLeds(dataToSend);
+    reversedDataToSend = (reversedDataToSend << 1);
+    writeLeds(dataToSend, reversedDataToSend);
     delay(refresh);
   }
   refresh = refresh + rateOfChange;
 }
 
-void writeLeds(byte ledData) {
+void writeLeds(byte ledData1, byte ledData2) {
   digitalWrite(latchPin, LOW);
-  shiftOut(dataPin, clockPin, LSBFIRST, ledData);
+  shiftOut(dataPin, clockPin, LSBFIRST, ledData1);
+  shiftOut(dataPin, clockPin, LSBFIRST, ledData2);
   digitalWrite(latchPin, HIGH);
 }
